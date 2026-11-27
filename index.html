@@ -672,7 +672,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 h1{font-size:20px;margin:12px 14px 2px}p.s{margin:0 14px 8px;color:var(--mut);font-size:13px}
 #chips{display:flex;gap:6px;overflow-x:auto;padding:4px 14px 8px}
 .chip{flex:none;border:1.5px solid var(--line);background:var(--card);color:var(--fg);border-radius:20px;padding:6px 11px;font-size:13px;cursor:pointer}
-.chip.off{opacity:.4}.chip.bud{border-color:#2e9e5b;font-weight:600}.chip.bud.act{background:#2e9e5b;color:#fff}
+.chip.off{opacity:.4}.chip.bud{border-color:#2e9e5b;font-weight:600}.chip.bud.act{background:#2e9e5b;color:#fff}.chip.cam{border-color:#2a7de1;font-weight:600}.chip.cam.act{background:#161616;color:#fff;border-color:#161616}
 #map{height:clamp(280px,46vh,540px);min-height:280px;margin:0 10px;border-radius:14px;border:1px solid var(--line)}
 .pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
 .pin span{transform:rotate(45deg);font-size:15px}.pin.sel{border-color:#000;box-shadow:0 0 0 3px rgba(255,255,255,.9),0 2px 6px rgba(0,0,0,.5)}
@@ -683,6 +683,23 @@ h1{font-size:20px;margin:12px 14px 2px}p.s{margin:0 14px 8px;color:var(--mut);fo
 #lang{display:flex;gap:6px;padding:0 14px 6px}
 #lang button{border:1.5px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:5px 12px;font:inherit;font-size:12px;cursor:pointer}
 #lang button.on{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
+#lang button.extra{margin-left:auto;border-color:#2a7de1;font-weight:700}
+.campin{width:20px;height:20px;border-radius:5px;background:#161616;color:#fff;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.cam img{display:block;width:320px;height:240px;border-radius:6px;background:#ddd}
+.cam .camtime{font-size:11px;color:var(--mut);margin:2px 0 6px}
+.cam .camhint{font-size:11px;color:var(--mut);margin-top:4px}
+.cam .camrefresh{float:right;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;padding:2px 7px;cursor:pointer;font:inherit;font-size:12px}
+#gl3d{position:fixed;inset:0;z-index:2000;background:#0f1114;display:none}
+#gl3d.open{display:block}
+#gl3dbar{height:46px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line)}
+#gl3dbar b{font-size:14px}#gl3dbar span{font-size:12px;color:var(--mut);flex:1}
+#gl3dbar button{border:1.5px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:5px 12px;font:inherit;font-size:14px;cursor:pointer}
+#gl3dmap{position:absolute;inset:46px 0 0 0}
+#gl3dload{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;background:rgba(0,0,0,.65);padding:10px 16px;border-radius:10px;font-size:14px;z-index:2}
+#gl3d .maplibregl-popup-content{font:13px/1.4 system-ui,sans-serif;color:#222}
+#gl3d .maplibregl-popup-content b{font-size:14px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#161616;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:3000;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #search input:focus{outline:2px solid #2a7de1;outline-offset:1px}
 .geo-btn{border:1.5px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:7px 9px;font:inherit;font-size:12px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .leaflet-control-layers-toggle{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 2 1 7l11 5 11-5-11-5zm0 12L1 9v4l11 5 11-5V9l-11 5z'/%3E%3C/svg%3E");background-size:24px 24px;background-position:center;background-repeat:no-repeat}
@@ -692,9 +709,10 @@ h1{font-size:20px;margin:12px 14px 2px}p.s{margin:0 14px 8px;color:var(--mut);fo
 <h1 id="ttl">🇭🇰 Гонконг: карта с улицами</h1>
 <p class="s" id="sub">Настоящая интерактивная карта: улицы, спутник и рельеф (переключатель слоёв справа сверху). Поиск и фильтры — выше; цена и часы — в карточке и списке. ✓ = сверено с источником, остальное примерно.</p>
 <div id="search"><input id="q" type="search" placeholder="Поиск: место, район, еда…" autocomplete="off" aria-label="Поиск по карте"></div>
-<div id="lang" role="group" aria-label="Язык / Language / 語言"><button type="button" data-l="ru" class="on">RU</button><button type="button" data-l="en">EN</button><button type="button" data-l="zh">中文</button></div>
+<div id="lang" role="group" aria-label="Язык / Language / 語言"><button type="button" data-l="ru" class="on">RU</button><button type="button" data-l="en">EN</button><button type="button" data-l="zh">中文</button><button type="button" id="btn3d" class="extra" title="3D-режим">3D</button></div>
 <div id="chips"></div><div id="map"></div>
 <div id="card"><h2>Выбери место</h2><p>Тапни булавку на карте или строку в списке.</p></div><div id="list"></div>
+<div id="gl3d" aria-hidden="true"><div id="gl3dbar"><b>3D</b><span id="gl3dnote"></span><button id="gl3dclose" type="button" aria-label="Закрыть 3D">✕</button></div><div id="gl3dmap"></div><div id="gl3dload">Загрузка 3D…</div></div><div id="toast" role="status"></div>
 <script>/* @preserve
  * Leaflet 1.9.4, a JS library for interactive maps. https://leafletjs.com
  * (c) 2010-2023 Vladimir Agafonkin, (c) 2010-2011 CloudMade
@@ -788,6 +806,12 @@ ru:{cafe:"Кафе",sight:"Достопримечательности",fun:"Ра
 en:{cafe:"Cafes",sight:"Sights",fun:"Entertainment",leisure:"Nature & parks",pool:"Pools",bowl:"Bowling",board:"Board games",pc:"PC & esports clubs",cook:"Cooking studios",idea:"Ideas"},
 zh:{cafe:"茶餐廳・咖啡店",sight:"景點",fun:"娛樂",leisure:"自然與公園",pool:"游泳池",bowl:"保齡球",board:"桌遊",pc:"網吧・電競",cook:"烹飪班",idea:"推薦"}
 };
+var X={
+ru:{cams:"Камеры",camUpdated:"Снимок:",camHint:"Обновляется примерно каждые 2 минуты. ↻ — обновить. Источник: Transport Department.",camError:"Не удалось загрузить камеры. Проверьте интернет.",camLoading:"Загружаю камеры…",open2d:"Открыть в 2D",loading3d:"Загрузка 3D…",mlFail:"Не удалось загрузить 3D. Проверьте интернет и WebGL.",camZoom:"Приблизьте карту до 13+, чтобы увидеть камеры.",hint3d:"Перетаскивайте, чтобы вращать; колесо — масштаб."},
+en:{cams:"Cameras",camUpdated:"Snapshot:",camHint:"Updates about every 2 minutes. ↻ to refresh. Source: Transport Department.",camError:"Could not load the cameras. Check your connection.",camLoading:"Loading cameras…",open2d:"Open in 2D",loading3d:"Loading 3D…",mlFail:"Could not load 3D. Check your connection and WebGL.",camZoom:"Zoom in to level 13+ to see the cameras.",hint3d:"Drag to rotate; scroll to zoom."},
+zh:{cams:"即時路況",camUpdated:"快照：",camHint:"約每2分鐘更新。按 ↻ 重新載入。資料來源：運輸署。",camError:"無法載入攝影機，請檢查網絡。",camLoading:"正在載入攝影機…",open2d:"在 2D 地圖開啟",loading3d:"正在載入 3D…",mlFail:"無法載入 3D，請檢查網絡及 WebGL。",camZoom:"請放大至 13 級以上觀看攝影機。",hint3d:"拖曳旋轉，滾輪縮放。"}
+};
+Object.keys(X).forEach(function(k){Object.assign(U[k],X[k])});
 var TR={en:[
 /*0*/{d:"Classic cha chaan teng in Mong Kok. The pineapple bun with a thick slab of butter and milk tea is the perfect breakfast. Seating is tight and shared - that is normal.",p:"≈HK$25–50",h:"≈6:30–23:30"},
 /*1*/{d:"Famous scrambled eggs and warm milk. The waiters move like sprinters: order and bill in minutes. Come outside lunch hours to avoid the queue.",p:"≈HK$40–70",h:"≈7:30–22:00, closed Tue"},
@@ -918,7 +942,7 @@ function pname(i){return lang==="zh"?ZN[i]+" "+P[i][0]:P[i][0]+" "+ZN[i]}
 function pdesc(i){return lang==="ru"?P[i][4]:TR[lang][i].d}
 function pprice(i){return lang==="ru"?P[i][5]:TR[lang][i].p}
 function phours(i){return lang==="ru"?P[i][6]:TR[lang][i].h}
-var on={},sel=null,cheap=false,opn=false,marks=[],q="";
+var on={},sel=null,cheap=false,opn=false,marks=[],q="",cams=false,camData=null,camLoading=false,camLayer=L.layerGroup(),camChipEl=null;
 var qEl=document.getElementById("q");qEl.addEventListener("input",function(){q=qEl.value.trim().toLowerCase();draw()});
 P.forEach(function(p,i){var c=C[p[1]];
 var m=L.marker([p[3],p[2]],{icon:L.divIcon({className:"",html:"<div class='pin' style='background:"+c[2]+"'><span>"+c[0]+"</span></div>",iconSize:[30,30],iconAnchor:[15,30]})});
@@ -927,6 +951,7 @@ var chips=document.getElementById("chips"),ob=null;
 function chip(txt,cls,fn){var b=document.createElement("button");b.className="chip "+cls;b.textContent=txt;b.onclick=function(){fn(b)};chips.appendChild(b);return b}
 function buildChips(){chips.innerHTML="";var bb=chip(ui().cheap,"bud",function(b){cheap=!cheap;b.classList.toggle("act",cheap);draw()});if(cheap)bb.classList.add("act");
 ob=chip("","bud",function(b){opn=!opn;b.classList.toggle("act",opn);draw()});if(opn)ob.classList.add("act");
+camChipEl=chip("📹 "+ui().cams,"cam",function(b){cams=!cams;b.classList.toggle("act",cams);toggleCams()});if(cams)camChipEl.classList.add("act");
 Object.keys(C).forEach(function(k){if(on[k]===undefined)on[k]=true;var b=chip(C[k][0]+" "+catName(k),"",function(b){on[k]=!on[k];b.classList.toggle("off",!on[k]);draw()});if(!on[k])b.classList.add("off")})}
 var DN=["пн","вт","ср","чт","пт","сб","вс"];
 function hkNow(){var d=new Date(Date.now()+8*3600000);return {day:(d.getUTCDay()+6)%7,min:d.getUTCHours()*60+d.getUTCMinutes()}}
@@ -954,11 +979,34 @@ if(v){if(!map.hasLayer(m))m.addTo(map);var e=m.getElement();if(e)e.firstChild.cl
 var d=document.createElement("div");d.innerHTML="<b></b><small></small><small></small>";d.children[0].textContent=C[p[1]][0]+" "+pname(i)+(p[7]?" ✓":"");d.children[1].textContent="💰 "+pprice(i);d.children[2].textContent="🕒 "+phours(i)+stTxt(i);
 d.onclick=function(){pick(i,true);document.getElementById("card").scrollIntoView({behavior:"smooth",block:"nearest"})};d.tabIndex=0;d.setAttribute("role","button");d.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();d.click()}};l.appendChild(d)}else if(map.hasLayer(m))map.removeLayer(m)});
 if(!l.children.length){var e=document.createElement("div");e.textContent=ui().empty;e.style.cursor="default";l.appendChild(e)}}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+var CAM_URL="https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_En.xml";
+function camPopup(c){var t=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});return "<div class='cam'><b>"+esc(c.d)+"</b><button class='camrefresh' type='button' onclick=\"camRefresh(this,'"+c.u+"')\">↻</button><div class='camtime'>"+ui().camUpdated+" "+t+"</div><a href='"+c.u+"' target='_blank' rel='noopener'><img data-url='"+c.u+"' src='"+c.u+"?t="+Date.now()+"' alt=''></a><div class='camhint'>"+esc(ui().camHint)+"</div></div>"}
+function renderCams(){if(!cams||!camData)return;camLayer.clearLayers();if(map.getZoom()<13)return;var b=map.getBounds().pad(0.15),ctr=map.getCenter(),list=[];camData.forEach(function(c){if(b.contains([c.lat,c.lng]))list.push(c)});list.sort(function(a,b){return map.distance(ctr,L.latLng(a.lat,a.lng))-map.distance(ctr,L.latLng(b.lat,b.lng))});list.slice(0,200).forEach(function(c){var m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:"",html:"<div class='campin'><svg viewBox='0 0 24 24' width='12' height='12' fill='white'><path d='M17 10.5V7a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5l4 4v-11l-4 4z'/></svg></div>",iconSize:[20,20],iconAnchor:[10,10]}),title:c.d});m.bindPopup(camPopup(c),{maxWidth:360,minWidth:320});camLayer.addLayer(m)})}
+function toggleCams(){if(!cams){if(map.hasLayer(camLayer))map.removeLayer(camLayer);return}map.addLayer(camLayer);if(camData){renderCams();if(map.getZoom()<13)toast(ui().camZoom);return}if(camLoading)return;camLoading=true;if(camChipEl)camChipEl.textContent="📹 …";fetch(CAM_URL).then(function(r){if(!r.ok)throw new Error(r.status);return r.text()}).then(function(t){var d=new DOMParser().parseFromString(t,"text/xml"),a=[];Array.prototype.forEach.call(d.getElementsByTagName("image"),function(im){var g=function(n){var e=im.getElementsByTagName(n)[0];return e?e.textContent:""};var la=parseFloat(g("latitude")),lo=parseFloat(g("longitude"));if(isFinite(la)&&isFinite(lo))a.push({lat:la,lng:lo,d:g("description").replace(/\s*\[[^\]]+\]\s*$/,""),u:g("url")})});camData=a;renderCams();if(map.getZoom()<13)toast(ui().camZoom)}).catch(function(){alert(ui().camError);cams=false;if(camChipEl)camChipEl.classList.remove("act");if(map.hasLayer(camLayer))map.removeLayer(camLayer)}).then(function(){camLoading=false;if(camChipEl)camChipEl.textContent="📹 "+ui().cams})}
+var toastTimer=null;
+function toast(msg){var t=document.getElementById("toast");if(!t)return;t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove("show")},3800)}
+var camTimer=null,camPopupOpen=false;
+map.on("popupopen",function(e){camPopupOpen=true;var el=e.popup.getElement(),img=el&&el.querySelector("img[data-url]");clearInterval(camTimer);if(!img)return;camTimer=setInterval(function(){img.src=img.getAttribute("data-url")+"?t="+Date.now()},120000)});
+map.on("popupclose",function(){camPopupOpen=false;clearInterval(camTimer);camTimer=null});
+map.on("moveend",function(){if(cams&&!camPopupOpen)renderCams()});
+window.camRefresh=function(btn,url){var i=btn.parentNode.querySelector("img");if(i)i.src=url+"?t="+Date.now()};
+var MLJS="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js",MLCSS="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css";
+var mlLoading=false,mlMap=null,mlMarkers=[];
+function open3D(){var g=document.getElementById("gl3d");g.classList.add("open");g.setAttribute("aria-hidden","false");var load=document.getElementById("gl3dload");document.getElementById("gl3dnote").textContent=ui().hint3d;load.style.display="block";load.textContent=ui().loading3d;if(window.maplibregl){init3D();return}if(mlLoading)return;mlLoading=true;var l=document.createElement("link");l.rel="stylesheet";l.href=MLCSS;document.head.appendChild(l);var s=document.createElement("script");s.src=MLJS;s.onload=function(){init3D()};s.onerror=function(){mlLoading=false;load.textContent=ui().mlFail};document.head.appendChild(s)}
+function close3D(){var g=document.getElementById("gl3d");g.classList.remove("open");g.setAttribute("aria-hidden","true")}
+function add3DMarkers(){mlMarkers.forEach(function(m){m.remove()});mlMarkers=[];P.forEach(function(p,i){var el=document.createElement("div");el.style.width="30px";el.style.height="30px";el.style.cursor="pointer";el.title=pname(i);el.innerHTML="<div class='pin' style='background:"+C[p[1]][2]+"'><span>"+C[p[1]][0]+"</span></div>";var pop=new maplibregl.Popup({offset:28,maxWidth:"300px"}).setHTML("<b>"+esc(pname(i))+"</b><br><span style='color:#777;font-size:12px'>"+esc(catName(p[1]))+"</span><br>"+esc(pdesc(i).slice(0,180))+(pdesc(i).length>180?"…":"")+"<br><a href='#' onclick=\"open2DFrom3D("+i+");return false\">"+esc(ui().open2d)+"</a>");mlMarkers.push(new maplibregl.Marker({element:el,anchor:"bottom"}).setLngLat([p[2],p[3]]).setPopup(pop).addTo(mlMap))})}
+function init3D(){var load=document.getElementById("gl3dload");try{var c=map.getCenter();if(!mlMap){mlMap=new maplibregl.Map({container:"gl3dmap",style:"https://tiles.openfreemap.org/styles/liberty",center:[c.lng,c.lat],zoom:Math.max(map.getZoom(),15),pitch:60,bearing:-20,maxPitch:85,attributionControl:false,antialias:true});mlMap.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");mlMap.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-left");mlMap.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:"© OpenFreeMap © OpenStreetMap"}),"bottom-right");add3DMarkers();mlMap.on("load",function(){try{mlMap.setPaintProperty("building-3d","fill-extrusion-color",["interpolate",["linear"],["get","render_height"],0,"#e9e3d8",80,"#d6c9b6",200,"#c2ae93",400,"#a98f70"]);mlMap.setPaintProperty("building-3d","fill-extrusion-opacity",0.92)}catch(e){}load.style.display="none"});mlMap.on("error",function(){});setTimeout(function(){try{mlMap.resize()}catch(e){}},80)}else{mlMap.resize();mlMap.jumpTo({center:[c.lng,c.lat],zoom:Math.max(map.getZoom(),15)});add3DMarkers();load.style.display="none"}}catch(e){load.textContent=ui().mlFail}}
+window.open2DFrom3D=function(i){close3D();pick(i,true);setTimeout(function(){document.getElementById("card").scrollIntoView({behavior:"smooth",block:"nearest"})},120)};
+document.getElementById("btn3d").addEventListener("click",open3D);
+document.getElementById("gl3dclose").addEventListener("click",close3D);
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&document.getElementById("gl3d").classList.contains("open"))close3D()});
 function applyLang(){
 document.documentElement.lang=lang==="zh"?"zh-Hant":lang;
 document.title=ui().title;
 document.getElementById("ttl").textContent=ui().title;
 document.getElementById("sub").textContent=ui().sub;
+document.getElementById("gl3dnote").textContent=ui().hint3d;
 qEl.placeholder=ui().search;
 var bs=document.querySelectorAll("#lang button");for(var i=0;i<bs.length;i++){bs[i].classList.toggle("on",bs[i].getAttribute("data-l")===lang)}
 var spans=document.querySelectorAll(".leaflet-control-layers-base label span span");ui().layers.forEach(function(t,j){if(spans[j])spans[j].textContent=" "+t});
