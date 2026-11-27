@@ -680,15 +680,19 @@ h1{font-size:20px;margin:12px 14px 2px}p.s{margin:0 14px 8px;color:var(--mut);fo
 #card h2{margin:0 0 4px;font-size:16px}#card .t{font-size:12px;color:var(--mut);margin-bottom:6px}#card p{margin:0 0 6px;font-size:14px;line-height:1.45}#card p.ph{font-weight:600;margin-bottom:3px}
 .gm{display:inline-block;margin-top:6px;font-size:13px;color:inherit;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;text-decoration:none}
 #search{padding:0 14px 4px}#search input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg);font-size:14px;font-family:inherit}
+#lang{display:flex;gap:6px;padding:0 14px 6px}
+#lang button{border:1.5px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:5px 12px;font:inherit;font-size:12px;cursor:pointer}
+#lang button.on{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
 #search input:focus{outline:2px solid #2a7de1;outline-offset:1px}
 .geo-btn{border:1.5px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:7px 9px;font:inherit;font-size:12px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .leaflet-control-layers-toggle{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 2 1 7l11 5 11-5-11-5zm0 12L1 9v4l11 5 11-5V9l-11 5z'/%3E%3C/svg%3E");background-size:24px 24px;background-position:center;background-repeat:no-repeat}
 .geo-btn:disabled{opacity:.6;cursor:default}
 #list{margin:0 14px 20px;font-size:13px}#list div:focus-visible{outline:2px solid #2a7de1;outline-offset:2px}#list small{display:block;color:var(--mut);margin-top:2px}#list div{padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
 </style></head><body>
-<h1>🇭🇰 Гонконг: карта с улицами</h1>
-<p class="s">Настоящая интерактивная карта: улицы, спутник и рельеф (переключатель слоёв справа сверху). Поиск и фильтры — выше; цена и часы — в карточке и списке. ✓ = сверено с источником, остальное примерно.</p>
+<h1 id="ttl">🇭🇰 Гонконг: карта с улицами</h1>
+<p class="s" id="sub">Настоящая интерактивная карта: улицы, спутник и рельеф (переключатель слоёв справа сверху). Поиск и фильтры — выше; цена и часы — в карточке и списке. ✓ = сверено с источником, остальное примерно.</p>
 <div id="search"><input id="q" type="search" placeholder="Поиск: место, район, еда…" autocomplete="off" aria-label="Поиск по карте"></div>
+<div id="lang" role="group" aria-label="Язык / Language / 語言"><button type="button" data-l="ru" class="on">RU</button><button type="button" data-l="en">EN</button><button type="button" data-l="zh">中文</button></div>
 <div id="chips"></div><div id="map"></div>
 <div id="card"><h2>Выбери место</h2><p>Тапни булавку на карте или строку в списке.</p></div><div id="list"></div>
 <script>/* @preserve
@@ -769,19 +773,161 @@ var sat=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_
 var topo=L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",{maxZoom:17,subdomains:"abc",attribution:"&copy; <a href='https://opentopomap.org'>OpenTopoMap</a> (CC-BY-SA)"});
 L.control.layers({"Улицы":streets,"Спутник":sat,"Рельеф":topo},null,{position:"topright",collapsed:true}).addTo(map);
 L.control.scale({imperial:false,position:"bottomleft"}).addTo(map);
-var geoLayer=null;
-var Geo=L.Control.extend({options:{position:"topright"},onAdd:function(){var b=L.DomUtil.create("button","geo-btn");b.type="button";b.textContent="Я здесь";b.title="Показать моё местоположение";L.DomEvent.disableClickPropagation(b);L.DomEvent.on(b,"click",function(){if(!navigator.geolocation){alert("Браузер не поддерживает геолокацию.");return}var old=b.textContent;b.textContent="Ищу…";b.disabled=true;navigator.geolocation.getCurrentPosition(function(pos){var ll=[pos.coords.latitude,pos.coords.longitude];if(geoLayer)map.removeLayer(geoLayer);var dot=L.circleMarker(ll,{radius:8,color:"#fff",weight:3,fillColor:"#2a7de1",fillOpacity:1}).bindPopup("Вы здесь");geoLayer=L.layerGroup([L.circle(ll,{radius:Math.min(pos.coords.accuracy||0,2000),color:"#2a7de1",weight:1,fillColor:"#2a7de1",fillOpacity:.12}),dot]).addTo(map);dot.openPopup();map.flyTo(ll,15,{duration:.8});b.textContent=old;b.disabled=false},function(){b.textContent=old;b.disabled=false;alert("Не удалось определить местоположение. Разрешите доступ в браузере и попробуйте ещё раз.")},{enableHighAccuracy:true,timeout:10000})});return b}});
+var geoLayer=null,geoBtnEl=null;
+var Geo=L.Control.extend({options:{position:"topright"},onAdd:function(){var b=L.DomUtil.create("button","geo-btn");geoBtnEl=b;b.type="button";b.textContent="Я здесь";b.title="Моё местоположение";L.DomEvent.disableClickPropagation(b);L.DomEvent.on(b,"click",function(){if(!navigator.geolocation){alert(ui().noGeo);return}var old=ui().geo;b.textContent=ui().locating;b.disabled=true;navigator.geolocation.getCurrentPosition(function(pos){var ll=[pos.coords.latitude,pos.coords.longitude];if(geoLayer)map.removeLayer(geoLayer);var dot=L.circleMarker(ll,{radius:8,color:"#fff",weight:3,fillColor:"#2a7de1",fillOpacity:1}).bindPopup(ui().here);geoLayer=L.layerGroup([L.circle(ll,{radius:Math.min(pos.coords.accuracy||0,2000),color:"#2a7de1",weight:1,fillColor:"#2a7de1",fillOpacity:.12}),dot]).addTo(map);dot.openPopup();map.flyTo(ll,15,{duration:.8});b.textContent=old;b.disabled=false},function(){b.textContent=old;b.disabled=false;alert(ui().geoErr)},{enableHighAccuracy:true,timeout:10000})});return b}});
 map.addControl(new Geo());
+var ZN=["金華冰廳","澳洲牛奶公司","蘭芳園","美都餐室","泰昌餅家","添好運（深水埗）","太平山頂","天壇大佛","大澳","文武廟","志蓮淨苑・南蓮園池","黃大仙祠","維多利亞港・天星小輪","星光大道","M+・西九文化區海濱","香港公園","九龍寨城公園","萬佛寺","海洋公園","香港迪士尼樂園","昂坪360","廟街夜市","女人街","金魚街・花墟","蘭桂坊","叮叮電車","龍脊","淺水灣","石澳泳灘","赤柱市場","維多利亞公園","西貢地質公園","南丫島","香港濕地公園","大帽山","觀塘海濱長廊","九龍公園游泳池","維多利亞公園游泳池","摩理臣山游泳池","堅尼地城游泳池","南華體育會保齡球場","雷霆保齡（黃埔）","白石保齡（沙田）","龍保齡（荃灣）","Tikitiki 保齡酒吧（西貢）","Capstone 桌遊咖啡店","Gala 桌遊咖啡店","Odd 桌遊酒吧","Jolly Thinkers（灣仔）","Sweet & Fun 咖啡店","旺魚電競（旺角）","CGA 電競館（旺角）","ABC Cooking Studio（銅鑼灣）","半島學堂（尖沙咀）","Cookly 街頭美食班（尖沙咀）","深水埗","長洲","堅尼地城壁畫","大館","尖沙咀海濱長廊"];
+
+var U={
+ru:{title:"🇭🇰 Гонконг: карта с улицами",sub:"Настоящая интерактивная карта: улицы, спутник и рельеф (переключатель слоёв справа сверху). Поиск и фильтры — выше; цена и часы — в карточке и списке. ✓ = сверено с источником, остальное примерно.",search:"Поиск: место, район, еда…",cheap:"💸 Бюджетно до 50 HK$",price:"Цена",hours:"Часы",gm:"📍 Открыть в Google Maps",empty:"Ничего не найдено. Измените запрос или фильтры.",choose:"Выбери место",tap:"Тапни булавку на карте или строку в списке.",geo:"Я здесь",geoTitle:"Показать моё местоположение",locating:"Ищу…",noGeo:"Браузер не поддерживает геолокацию.",geoErr:"Не удалось определить местоположение. Разрешите доступ в браузере и попробуйте ещё раз.",here:"Вы здесь",openNow:"сейчас открыто",closedNow:"сейчас закрыто",layers:["Улицы","Спутник","Рельеф"]},
+en:{title:"🇭🇰 Hong Kong: street map",sub:"A real interactive map: streets, satellite and terrain (layer switcher at top right). Search and filters above; prices and hours are in the card and list. ✓ = checked against a source, the rest is approximate.",search:"Search: place, area, food…",cheap:"💸 Under HK$50",price:"Price",hours:"Hours",gm:"📍 Open in Google Maps",empty:"Nothing found. Change the search or filters.",choose:"Choose a place",tap:"Tap a pin on the map or a row in the list.",geo:"I’m here",geoTitle:"Show my location",locating:"Locating…",noGeo:"This browser does not support geolocation.",geoErr:"Could not get your location. Allow access in the browser and try again.",here:"You are here",openNow:"open now",closedNow:"closed now",layers:["Streets","Satellite","Terrain"]},
+zh:{title:"🇭🇰 香港：街道地圖",sub:"真實互動地圖：街道、衛星與地形（右上角切換圖層）。上方可搜尋及篩選；價格與時間見卡片和列表。✓ = 已核對來源，其餘為約略資料。",search:"搜尋：地點、地區、美食…",cheap:"💸 HK$50 以下",price:"價格",hours:"時間",gm:"📍 在 Google 地圖開啟",empty:"找不到結果，請更改搜尋或篩選。",choose:"選擇地點",tap:"點擊地圖上的標記或列表中的項目。",geo:"我在這裡",geoTitle:"顯示我的位置",locating:"定位中…",noGeo:"此瀏覽器不支援定位。",geoErr:"無法取得位置，請允許瀏覽器存取定位後再試。",here:"您在此處",openNow:"現在營業",closedNow:"現在休息",layers:["街道","衛星","地形"]}
+};
+var CATS={
+ru:{cafe:"Кафе",sight:"Достопримечательности",fun:"Развлечения",leisure:"Природа и парки",pool:"Бассейны",bowl:"Боулинг",board:"Настолки",pc:"Компьютерные клубы",cook:"Кулинарные студии",idea:"Идеи от меня"},
+en:{cafe:"Cafes",sight:"Sights",fun:"Entertainment",leisure:"Nature & parks",pool:"Pools",bowl:"Bowling",board:"Board games",pc:"PC & esports clubs",cook:"Cooking studios",idea:"Ideas"},
+zh:{cafe:"茶餐廳・咖啡店",sight:"景點",fun:"娛樂",leisure:"自然與公園",pool:"游泳池",bowl:"保齡球",board:"桌遊",pc:"網吧・電競",cook:"烹飪班",idea:"推薦"}
+};
+var TR={en:[
+/*0*/{d:"Classic cha chaan teng in Mong Kok. The pineapple bun with a thick slab of butter and milk tea is the perfect breakfast. Seating is tight and shared - that is normal.",p:"≈HK$25–50",h:"≈6:30–23:30"},
+/*1*/{d:"Famous scrambled eggs and warm milk. The waiters move like sprinters: order and bill in minutes. Come outside lunch hours to avoid the queue.",p:"≈HK$40–70",h:"≈7:30–22:00, closed Tue"},
+/*2*/{d:"The place that invented silk-stocking milk tea, strained through a cloth filter. Also try the pork chop bun. Many people grab tea from the window on Gage Street.",p:"≈HK$25–45",h:"≈7:30–18:00, closed Sun"},
+/*3*/{d:"A 1950s retro cafe in Yau Ma Tei: mosaic tiles, fans and street views. Good for photos and a quiet breakfast with toast and tea. Go early.",p:"≈HK$50–80",h:"≈7:30–21:00"},
+/*4*/{d:"Crispy egg custard tarts, a must-try cheap snack in Central. Buy them warm.",p:"≈HK$13–15 each",h:"≈8:00–21:00"},
+/*5*/{d:"Michelin-starred dim sum at humble prices. Try the BBQ pork buns and shrimp dumplings. Go off-peak or expect a queue.",p:"≈HK$60–100",h:"≈10:00–21:30"},
+/*6*/{d:"Hong Kong’s main viewpoint: skyscrapers, the harbour and green hills. Take the historic Peak Tram or bus 15 - cheaper and scenic. Come at sunset as the lights come on.",p:"Viewpoint free; tram ≈HK$80–100",h:"24/7; tram ≈7:00–24:00"},
+/*7*/{d:"A 34 m bronze Buddha sits above Po Lin Monastery. Climb 268 steps, free of charge. Get there by cable car or bus from Tung Chung.",p:"Free (steps); cable car extra",h:"Monastery ≈10:00–17:30"},
+/*8*/{d:"A stilt fishing village: houses over the water, stalls with dried fish, shrimp paste and street snacks. A boat trip passes the stilts and sometimes pink dolphins.",p:"Free; boat ≈HK$25–40",h:"24/7 (shops ≈10:00–18:00)"},
+/*9*/{d:"One of the city’s oldest Taoist temples. Huge incense coils hang from the ceiling, smoke drifting through the light. Antique shops on Hollywood Road are nearby.",p:"Free",h:"≈7:00–18:00"},
+/*10*/{d:"A Tang-style Buddhist nunnery built of wood without nails, next to the perfect Nan Lian Garden with ponds, pines and rocks. One of the calmest corners of the city.",p:"Free",h:"Nunnery ≈9:00–16:30; garden ≈7:00–21:00"},
+/*11*/{d:"The most alive temple in town: people shake bamboo sticks and read fortunes amid incense smoke. Bright red columns, gardens and crowds.",p:"Free (entry)",h:"≈7:00–17:30"},
+/*12*/{d:"Green-and-white ferries have crossed the harbour since 1888. The cheapest and most beautiful tour in Hong Kong. The upper deck costs a little more but has the better view.",p:"≈HK$4–6",h:"≈6:30–23:30"},
+/*13*/{d:"The Tsim Sha Tsui waterfront with handprints of Hong Kong film stars and a Bruce Lee statue. Every evening the Symphony of Lights plays on the skyscrapers.",p:"Free",h:"24/7; show ≈20:00"},
+/*14*/{d:"A major museum of visual culture and a waterfront park with views of the island. The park and sunset are free; museum galleries are ticketed.",p:"Park free; museum ticketed",h:"Park 24/7; museum ≈10:00–18:00"},
+/*15*/{d:"An oasis between skyscrapers: waterfalls, a conservatory, an aviary and ponds. A good place to rest in the middle of the bustle.",p:"Free (aviary and park)",h:"≈6:00–23:00"},
+/*16*/{d:"A park on the site of the world’s densest neighbourhood. A classical Chinese garden, ponds and remains of the old walled city.",p:"Free",h:"≈6:30–23:00"},
+/*17*/{d:"Sha Tin. More than 400 steps past golden arhat statues lead to a temple with thousands of small Buddhas. Go in the morning when it is cooler.",p:"Free",h:"≈9:00–17:30"},
+/*18*/{d:"An amusement park and aquarium on a rocky headland. Pandas, rides and a cable car over the sea. Buy tickets online and arrive at opening.",p:"From ≈HK$450",h:"≈10:00–18:00"},
+/*19*/{d:"A family classic on Lantau. Choose weekdays for fewer crowds. Tickets bought online in advance are cheaper.",p:"≈HK$600–700",h:"≈10:30–20:30 (varies)"},
+/*20*/{d:"A cable car almost 6 km over the sea and Lantau hills to Ngong Ping village. Take the glass-bottom cabin - it is breathtaking.",p:"≈HK$250 return",h:"≈10:00–18:00"},
+/*21*/{d:"Yau Ma Tei night market: street food, fortune tellers, souvenirs, clothes and trinkets. Bargain boldly - prices often drop by a third. Finish with grilled prawns.",p:"Free entry",h:"≈18:00–24:00"},
+/*22*/{d:"Tung Choi Street in Mong Kok, with stalls of clothes, phone cases, bags and knick-knacks. The most colourful and noisy market - bargain.",p:"Free entry",h:"≈12:00–23:00"},
+/*23*/{d:"Two neighbouring streets: aquarium fish in bags and a flower market. An unusual walk near Mong Kok, great for photos.",p:"Free entry",h:"≈10:00–19:00"},
+/*24*/{d:"Central’s bar and club district. Noisy and crowded on Fridays and Saturdays, so come in the evening.",p:"Drinks ≈HK$60–100",h:"Evening until late"},
+/*25*/{d:"Double-decker trams have run along the island’s north shore since 1904. Sit upstairs by the window for the best view of the city from under the roofs.",p:"≈HK$3",h:"≈5:00–1:00"},
+/*26*/{d:"An easy ridge trail with views over the bays and beaches of the south side. Two to three hours, finishing at Shek O or Big Wave Bay. Bring water and a hat.",p:"Free",h:"24/7 (best before sunset)"},
+/*27*/{d:"A city beach by the sea. Nearby are the Tin Hau Temple with colourful statues and a longevity bridge. Popular at weekends.",p:"Free",h:"24/7"},
+/*28*/{d:"A cosy village with a beach at the foot of a hill, cafes and small shops. A good extension of the Dragon’s Back trail.",p:"Free",h:"24/7"},
+/*29*/{d:"A coastal town with a market, a beach and waterfront cafes. Souvenirs, clothes and a relaxed colonial atmosphere.",p:"Free entry",h:"≈10:00–18:00"},
+/*30*/{d:"A huge park in Causeway Bay: tai chi in the morning, thousands of locals at weekends. Great for picnics.",p:"Free",h:"24/7"},
+/*31*/{d:"Hexagonal basalt columns, lagoons and empty beaches. Take a boat from Sai Kung town and swim.",p:"Free; boat ≈HK$50–100",h:"24/7"},
+/*32*/{d:"A car-free island: hike between Yung Shue Wan and Sok Kwu Wan, eat seafood by the water and enjoy the lazy atmosphere.",p:"Ferry ≈HK$20–25",h:"Ferries ≈6:30–24:00"},
+/*33*/{d:"A reserve on the Shenzhen border: mangroves, herons, a crocodile and skyscrapers on the horizon. For a quiet day in nature.",p:"≈HK$30 adult (check)",h:"≈10:00–17:00, closed Tue (check)"},
+/*34*/{d:"Hong Kong’s highest point (957 m). Hike the MacLehose Trail and see the whole region. Start early and bring water.",p:"Free",h:"24/7 (best before sunset)"},
+/*35*/{d:"A waterfront promenade in Kowloon East with art installations and harbour views. A quiet sunset away from the crowds.",p:"Free",h:"24/7"},
+/*36*/{d:"Kowloon’s main pool: heated indoor pools and outdoor lagoons in a park with flamingos. There is a 50 m lane pool. Great in hot weather and on cold days when the indoor pools are open.",p:"HK$17 weekdays, 19 weekends; students, 60+, kids 3–13: 8/9",h:"Sessions ≈6:30–12:00, 13:00–17:00, 18:00–22:00 (check)"},
+/*37*/{d:"A modern complex in Causeway Bay: a 50×25 m main pool, a diving pool and a kids’ pool. Outdoors, best in the warm months.",p:"HK$17 weekdays, 19 weekends; 8/9 concession",h:"Sessions ≈6:30–12:00, 13:00–17:00, 18:00–22:00 (check)"},
+/*38*/{d:"The island’s first heated public pool (1972). Its indoor 50 m pool stays open all winter when the others close.",p:"HK$17 weekdays, 19 weekends; 8/9 concession",h:"Sessions ≈6:30–12:00, 13:00–17:00, 18:00–22:00 (check)"},
+/*39*/{d:"A modern pool on the west side of the island with sea views. Quieter than the central ones, with no crowds. Only the indoor part is open in winter.",p:"HK$17 weekdays, 19 weekends; 8/9 concession",h:"Sessions ≈6:30–12:00, 13:00–17:00, 18:00–22:00 (check)"},
+/*40*/{d:"The island’s largest bowling centre: 60 lanes in Causeway Bay. Easy to reach from Central, and lanes are usually free.",p:"≈HK$30/game weekdays, 45 weekends; shoes 15",h:"10:00–24:00"},
+/*41*/{d:"Bowling in Hung Hom in a mall basement. VIP rooms and lessons. Good for groups and practice.",p:"From HK$39 adult, 29 student (weekdays); shoes from 14",h:"10:00–24:00"},
+/*42*/{d:"One of the cheapest bowling alleys, in Sha Tin. Further to reach but inexpensive, especially for students.",p:"≈HK$30–41 weekdays, 51 weekends; shoes from 8",h:"10:00–24:00"},
+/*43*/{d:"An old but cheap alley in Tsuen Wan. Open late - late games are its main plus.",p:"Cheap; check price",h:"Mon–Fri 14:00–1:00; Sat 10:00–1:00; Sun 10:00–24:00"},
+/*44*/{d:"A tropical bowling bar: palms, wicker furniture, cocktails and music. Pricier, but the evening feels like an island holiday.",p:"≈HK$400+ with food and drinks",h:"Mon–Thu 15–22, Fri 15–0, Sat 8–0, Sun 8–22 (check)"},
+/*45*/{d:"A quiet spot in Causeway Bay: games without food, drinks only. Good for a small group.",p:"≈HK$30–60 entry (old data)",h:"Mon–Thu 12:00–19:00; Fri–Sun 12:00–20:00"},
+/*46*/{d:"A cosy cafe in Tsim Sha Tsui with almost 1,000 games on the shelves. Good for beginners and for rare board games.",p:"Check on site",h:"Tue–Thu 14:00–22:00; Fri–Sun 12:00–23:00"},
+/*47*/{d:"Board games with cocktails and dinner in Mong Kok. Noisy in the evening, so book a table in advance.",p:"Table + drinks; check",h:"Mon–Fri 16:30–22:00; Sat–Sun 12:00–22:00"},
+/*48*/{d:"Hundreds of games and staff who explain the rules. Good for first-timers.",p:"≈HK$70–100 per person (old data)",h:"12:00–19:00"},
+/*49*/{d:"One of the best-value options: no entry fee, pay only for drinks and food.",p:"No cover charge",h:"Check on site"},
+/*50*/{d:"A modern PC club in Mong Kok. A main hall and private rooms, plus 9-hour night packages.",p:"Main hall HK$15/h, room 25; 9-hour night from HK$50",h:"Open overnight (9-hour packages)"},
+/*51*/{d:"A big esports complex: an arena, VR zone, consoles and a streaming room. For those who want real gaming.",p:"≈HK$30/h (2018 data)",h:"Check"},
+/*52*/{d:"A Japanese chain: baking and cooking in a bright studio, each person at their own station. Good for beginners.",p:"≈HK$450–980 per class",h:"Check schedule"},
+/*53*/{d:"A class at the historic Peninsula hotel: dim sum, chocolate and cocktails. Expensive but beautiful, with a certificate.",p:"HK$1,280–2,680 + 10% service",h:"By booking"},
+/*54*/{d:"A 3-hour Hong Kong street food class in a Tsim Sha Tsui studio. You cook and eat together.",p:"≈US$122 (≈HK$950)",h:"Starts 12:00, 15:00, 18:00"},
+/*55*/{d:"My favourite: electronics and fabric markets, noodle shops and old-school desserts. The most authentic and affordable district in the city.",p:"Food ≈HK$30–80",h:"Shopping ≈10:00–22:00"},
+/*56*/{d:"A dumbbell-shaped island: bicycles, pao buns, a beach and temples. A fast ferry ride feels a thousand kilometres from the city.",p:"Ferry ≈HK$15–50",h:"Ferries ≈6:00–1:00"},
+/*57*/{d:"Street art on walls and quiet coffee shops on the west side of the island. Not a crowd, but real life.",p:"Free",h:"24/7"},
+/*58*/{d:"A former prison and police station in Central, now an arts centre: exhibitions, courtyards and cafes. A good place to take a break.",p:"Courtyards free",h:"≈8:00–23:00"},
+/*59*/{d:"Sunset views of the island’s skyscrapers and lights on the water. A free evening you will remember.",p:"Free",h:"24/7"}
+],zh:[
+/*0*/{d:"旺角經典茶餐廳。菠蘿油配厚切牛油和奶茶，是完美早餐。座位擠迫、要搭枱，這是常態。",p:"約 HK$25–50",h:"約 6:30–23:30"},
+/*1*/{d:"馳名炒蛋和熱鮮奶。侍應動作飛快，落單結帳幾分鐘搞定。避開午市就不用排隊。",p:"約 HK$40–70",h:"約 7:30–22:00，星期二休息"},
+/*2*/{d:"「絲襪奶茶」的發源地，茶用布袋過濾。也試試豬扒包。很多人會在結志街窗口買外賣奶茶。",p:"約 HK$25–45",h:"約 7:30–18:00，星期日休息"},
+/*3*/{d:"油麻地1950年代懷舊冰室：馬賽克磚、風扇、街景。適合拍照和吃多士奶茶的悠閒早餐，最好早上去。",p:"約 HK$50–80",h:"約 7:30–21:00"},
+/*4*/{d:"酥脆蛋撻，中環必吃的平價小食。趁熱買。",p:"約 HK$13–15 一件",h:"約 8:00–21:00"},
+/*5*/{d:"米芝蓮級點心，價錢親民。試叉燒包和蝦餃。避開繁忙時間，否則要排隊。",p:"約 HK$60–100",h:"約 10:00–21:30"},
+/*6*/{d:"香港首席觀景點：高樓、海港和青山。可搭山頂纜車或15號巴士，便宜又好看。黃昏上來看燈光亮起。",p:"觀景免費；纜車約 HK$80–100",h:"24小時；纜車約 7:00–24:00"},
+/*7*/{d:"34米高銅佛坐於寶蓮禪寺上方。爬268級樓梯，免費。可從東涌搭纜車或巴士前往。",p:"免費（樓梯）；纜車另計",h:"寺院約 10:00–17:30"},
+/*8*/{d:"棚屋漁村：水上屋、鹹魚蝦醬和街頭小食。小艇會經過棚屋，有時還能看到粉紅海豚。",p:"免費；小艇約 HK$25–40",h:"24小時（店舖約 10:00–18:00）"},
+/*9*/{d:"市內最古老的道觀之一。天花掛着巨型塔香，煙霧在光線中飄散。附近荷李活道有古董店。",p:"免費",h:"約 7:00–18:00"},
+/*10*/{d:"唐代風格佛寺，全木結構不用釘，旁邊是南蓮園池，有池塘、松樹和奇石，是市內最寧靜的角落之一。",p:"免費",h:"寺院約 9:00–16:30；園池約 7:00–21:00"},
+/*11*/{d:"最「旺」的廟宇：善信搖籤求籤，香火鼎盛。紅柱、園林和人潮。",p:"免費（入場）",h:"約 7:00–17:30"},
+/*12*/{d:"綠白小輪自1888年起渡海。全香港最便宜又最美的「觀光團」。上層貴一點，但景觀更好。",p:"約 HK$4–6",h:"約 6:30–23:30"},
+/*13*/{d:"尖沙咀海濱，有香港電影明星手印和李小龍銅像。每晚大廈外牆上演「幻彩詠香江」。",p:"免費",h:"24小時；表演約 20:00"},
+/*14*/{d:"大型視覺文化博物館和海濱公園，可眺望港島。公園和日落免費，博物館展廳需購票。",p:"公園免費；博物館需購票",h:"公園24小時；博物館約 10:00–18:00"},
+/*15*/{d:"高樓之間的綠洲：瀑布、溫室、觀鳥園和池塘，是鬧市中休息的好地方。",p:"免費（觀鳥園及公園）",h:"約 6:00–23:00"},
+/*16*/{d:"建於全球人口最稠密社區舊址的公園。中式園林、池塘和舊城寨遺跡。",p:"免費",h:"約 6:30–23:00"},
+/*17*/{d:"沙田。400多級樓梯，兩旁是金色羅漢像，山上是萬佛寺。早上較涼快。",p:"免費",h:"約 9:00–17:30"},
+/*18*/{d:"建在岩石岬角上的主題公園和水族館。有熊貓、機動遊戲和海上纜車。網上購票，開園就到。",p:"約 HK$450 起",h:"約 10:00–18:00"},
+/*19*/{d:"大嶼山的家庭經典。平日人較少。預早網上購票更便宜。",p:"約 HK$600–700",h:"約 10:30–20:30（會變動）"},
+/*20*/{d:"近6公里長的纜車，跨海越過大嶼山山巒到昂坪市集。選水晶車廂，景色震撼。",p:"約 HK$250 來回",h:"約 10:00–18:00"},
+/*21*/{d:"油麻地夜市：街頭小食、算命、紀念品、衣服雜貨。大膽講價，通常可減三分一。最後吃燒蝦。",p:"免入場費",h:"約 18:00–24:00"},
+/*22*/{d:"旺角通菜街，攤檔賣衣服、電話殼、手袋雜貨。最地道最熱鬧的市場，記得講價。",p:"免入場費",h:"約 12:00–23:00"},
+/*23*/{d:"兩條相鄰街道：一袋袋觀賞魚和花墟。旺角附近的有趣散步路線，拍照好看。",p:"免入場費",h:"約 10:00–19:00"},
+/*24*/{d:"中環酒吧和夜店區。星期五、六晚特別熱鬧擁擠，晚上來。",p:"飲品約 HK$60–100",h:"晚上至深夜"},
+/*25*/{d:"雙層電車自1904年起行走港島北岸。坐上層靠窗，從屋簷下看城市最好。",p:"約 HK$3",h:"約 5:00–1:00"},
+/*26*/{d:"輕鬆山脊步道，可眺望港島南岸海灣和沙灘。約2至3小時，終點石澳或大浪灣。帶水和帽。",p:"免費",h:"24小時（最好日落前）"},
+/*27*/{d:"海邊的市區泳灘。附近有天后廟、彩色神像和長壽橋。週末人多。",p:"免費",h:"24小時"},
+/*28*/{d:"山腳下的小村和泳灘，有咖啡店和小店。可接龍脊步道繼續走。",p:"免費",h:"24小時"},
+/*29*/{d:"海邊小鎮，有市集、泳灘和海濱咖啡店。紀念品、衣服和悠閒的殖民地氣氛。",p:"免入場費",h:"約 10:00–18:00"},
+/*30*/{d:"銅鑼灣的大型公園：早上有人打太極，週末有成千上萬的市民。適合野餐。",p:"免費",h:"24小時"},
+/*31*/{d:"六角形玄武岩柱、潟湖和寧靜沙灘。從西貢市中心搭船出海暢泳。",p:"免費；小艇約 HK$50–100",h:"24小時"},
+/*32*/{d:"無車小島：往來榕樹灣和索罟灣的遠足路線、海邊海鮮和悠閒氣氛。",p:"渡輪約 HK$20–25",h:"渡輪約 6:30–24:00"},
+/*33*/{d:"位於深圳邊境的保護區：紅樹林、鷺鳥、鱷魚和遠處的高樓。適合親近大自然的寧靜一天。",p:"成人約 HK$30（請查詢）",h:"約 10:00–17:00，星期二休息（請查詢）"},
+/*34*/{d:"香港最高峰（957米）。沿麥理浩徑遠足，飽覽全區景色。早出發，帶夠水。",p:"免費",h:"24小時（最好日落前）"},
+/*35*/{d:"九龍東海濱長廊，有藝術裝置和海港景色。遠離人潮的寧靜日落。",p:"免費",h:"24小時"},
+/*36*/{d:"九龍主要泳池：室內暖水池，以及有紅鸛的公園戶外水池。設50米泳線。炎熱天氣和寒冷日子（室內開放時）都適合。",p:"平日 HK$17，週末 19；學生、60+、3–13歲小童：8/9",h:"時段約 6:30–12:00、13:00–17:00、18:00–22:00（請查詢）"},
+/*37*/{d:"銅鑼灣現代化泳池：50×25米主池、跳水池和兒童池。露天，炎熱月份最適合。",p:"平日 HK$17，週末 19；優惠 8/9",h:"時段約 6:30–12:00、13:00–17:00、18:00–22:00（請查詢）"},
+/*38*/{d:"港島首個暖水公眾泳池（1972年）。室內50米池全年開放，其他池關閉時仍可游。",p:"平日 HK$17，週末 19；優惠 8/9",h:"時段約 6:30–12:00、13:00–17:00、18:00–22:00（請查詢）"},
+/*39*/{d:"港島西的現代泳池，可望海。比中環一帶清靜，不會擠擁。冬天只開放室內部分。",p:"平日 HK$17，週末 19；優惠 8/9",h:"時段約 6:30–12:00、13:00–17:00、18:00–22:00（請查詢）"},
+/*40*/{d:"港島最大保齡球場：銅鑼灣60條球道。中環過來方便，通常有位。",p:"平日約 HK$30/局，週末 45；租鞋 15",h:"10:00–24:00"},
+/*41*/{d:"紅磡商場地庫的保齡球場。有VIP房和課程，適合公司和練習。",p:"成人 HK$39 起，學生 29（平日）；租鞋 14 起",h:"10:00–24:00"},
+/*42*/{d:"沙田最便宜的球場之一。路程較遠，但價錢實惠，學生尤其抵。",p:"平日約 HK$30–41，週末 51；租鞋 8 起",h:"10:00–24:00"},
+/*43*/{d:"荃灣的老牌平價球場。營業至深夜，深夜場是最大優點。",p:"平價，請查詢",h:"星期一至五 14:00–1:00；六 10:00–1:00；日 10:00–24:00"},
+/*44*/{d:"熱帶風情保齡酒吧：棕櫚樹、藤家具、雞尾酒和音樂。價錢較貴，但晚上像去了島上度假。",p:"連餐飲約 HK$400+",h:"一至四 15–22，五 15–0，六 8–0，日 8–22（請查核）"},
+/*45*/{d:"銅鑼灣的清靜小店：只供飲品，不供食物。適合小型聚會。",p:"入場約 HK$30–60（舊資料）",h:"一至四 12:00–19:00；五至日 12:00–20:00"},
+/*46*/{d:"尖沙咀舒適咖啡店，架上近1000款桌遊。新手和找冷門遊戲的人都適合。",p:"請於現場查詢",h:"二至四 14:00–22:00；五至日 12:00–23:00"},
+/*47*/{d:"旺角桌遊酒吧，有雞尾酒和晚餐。晚上較吵，最好預先訂枱。",p:"枱費加飲品，請查詢",h:"一至五 16:30–22:00；六日 12:00–22:00"},
+/*48*/{d:"數百款遊戲，店員會講解規則。適合從未玩過的新手。",p:"每人約 HK$70–100（舊資料）",h:"12:00–19:00"},
+/*49*/{d:"最抵玩的選擇之一：免入場費，只付飲品和食物。",p:"免入場費",h:"請於現場查詢"},
+/*50*/{d:"旺角現代網吧。有大廳和獨立房間，另有9小時通宵套餐。",p:"大廳 HK$15/小時，房間 25；9小時通宵 HK$50 起",h:"通宵營業（9小時套餐）"},
+/*51*/{d:"大型電競館：比賽場地、VR區、遊戲主機和直播室。適合想認真打機的人。",p:"約 HK$30/小時（2018年資料）",h:"請查詢"},
+/*52*/{d:"日本連鎖烹飪教室：在明亮教室學烘焙和煮食，每人一個工作位。適合新手。",p:"每堂約 HK$450–980",h:"請查詢時間表"},
+/*53*/{d:"半島酒店歷史建築內的課程：點心、朱古力、雞尾酒。價錢高，但環境優美，還有證書。",p:"HK$1,280–2,680 + 10% 服務費",h:"需預約"},
+/*54*/{d:"尖沙咀工作室的3小時香港街頭美食班。一起煮、一起吃。",p:"約 US$122（約 HK$950）",h:"12:00、15:00、18:00 開始"},
+/*55*/{d:"我的最愛：電子產品和布藝市場、麵店和老式甜品。全城最真實、最平價的地區。",p:"餐飲約 HK$30–80",h:"購物約 10:00–22:00"},
+/*56*/{d:"啞鈴形小島：單車、平安包、泳灘和廟宇。搭快船不久，卻像離城市一千公里。",p:"渡輪約 HK$15–50",h:"渡輪約 6:00–1:00"},
+/*57*/{d:"港島西的牆上街頭藝術和寧靜咖啡店。不是人潮，而是真實生活。",p:"免費",h:"24小時"},
+/*58*/{d:"中環前監獄和警署，現在是藝術中心：展覽、庭院、咖啡店。休息的好地方。",p:"庭院免費",h:"約 8:00–23:00"},
+/*59*/{d:"黃昏看港島高樓和海上燈光。一個免費而難忘的晚上。",p:"免費",h:"24小時"}
+]};
+var lang="ru";try{var sv=localStorage.getItem("hkLang");if(U[sv])lang=sv;else{var nl=(navigator.language||"").toLowerCase();if(nl.indexOf("zh")===0)lang="zh";else if(nl.indexOf("en")===0)lang="en"}}catch(e){}
+function ui(){return U[lang]}
+function catName(k){return (CATS[lang]&&CATS[lang][k])||C[k][1]}
+function pname(i){return lang==="zh"?ZN[i]+" "+P[i][0]:P[i][0]+" "+ZN[i]}
+function pdesc(i){return lang==="ru"?P[i][4]:TR[lang][i].d}
+function pprice(i){return lang==="ru"?P[i][5]:TR[lang][i].p}
+function phours(i){return lang==="ru"?P[i][6]:TR[lang][i].h}
 var on={},sel=null,cheap=false,opn=false,marks=[],q="";
 var qEl=document.getElementById("q");qEl.addEventListener("input",function(){q=qEl.value.trim().toLowerCase();draw()});
 P.forEach(function(p,i){var c=C[p[1]];
 var m=L.marker([p[3],p[2]],{icon:L.divIcon({className:"",html:"<div class='pin' style='background:"+c[2]+"'><span>"+c[0]+"</span></div>",iconSize:[30,30],iconAnchor:[15,30]})});
-m.bindTooltip(p[0],{direction:"top",offset:[0,-30]});m.on("click",function(){pick(i,true)});marks.push(m)});
-var chips=document.getElementById("chips");
+m.bindTooltip(p[0]+" "+ZN[i],{direction:"top",offset:[0,-30]});m.on("click",function(){pick(i,true)});marks.push(m)});
+var chips=document.getElementById("chips"),ob=null;
 function chip(txt,cls,fn){var b=document.createElement("button");b.className="chip "+cls;b.textContent=txt;b.onclick=function(){fn(b)};chips.appendChild(b);return b}
-chip("💸 Бюджетно до 50 HK$","bud",function(b){cheap=!cheap;b.classList.toggle("act",cheap);draw()});
-var ob=chip("","bud",function(b){opn=!opn;b.classList.toggle("act",opn);draw()});
-Object.keys(C).forEach(function(k){on[k]=true;chip(C[k][0]+" "+C[k][1],"",function(b){on[k]=!on[k];b.classList.toggle("off",!on[k]);draw()})});
+function buildChips(){chips.innerHTML="";var bb=chip(ui().cheap,"bud",function(b){cheap=!cheap;b.classList.toggle("act",cheap);draw()});if(cheap)bb.classList.add("act");
+ob=chip("","bud",function(b){opn=!opn;b.classList.toggle("act",opn);draw()});if(opn)ob.classList.add("act");
+Object.keys(C).forEach(function(k){if(on[k]===undefined)on[k]=true;var b=chip(C[k][0]+" "+catName(k),"",function(b){on[k]=!on[k];b.classList.toggle("off",!on[k]);draw()});if(!on[k])b.classList.add("off")})}
 var DN=["пн","вт","ср","чт","пт","сб","вс"];
 function hkNow(){var d=new Date(Date.now()+8*3600000);return {day:(d.getUTCDay()+6)%7,min:d.getUTCHours()*60+d.getUTCMinutes()}}
 function openNow(p){var s=p[6],n=hkNow();
@@ -794,19 +940,32 @@ if(dm){var a=DN.indexOf(dm[2]),b=dm[3]?DN.indexOf(dm[3]):a;ok=a<=b?(n.day>=a&&n.
 known=true;if(!ok)return;
 rs.forEach(function(r){var m=r.split("–"),t=function(x){var q=x.split(":");return +q[0]*60+(+q[1]||0)};var a2=t(m[0]),b2=t(m[1]);if(b2<=a2)b2+=1440;if((n.min>=a2&&n.min<b2)||(n.min+1440>=a2&&n.min+1440<b2))open=true})});
 if(known)return open;if(/вечер/.test(s))return n.min>=1080||n.min<180;return null}
-function stTxt(p){var t=openNow(p);return t===true?" · 🟢 сейчас открыто":t===false?" · 🔴 сейчас закрыто":""}
+function stTxt(i){var t=openNow(P[i]);return t===true?" · 🟢 "+ui().openNow:t===false?" · 🔴 "+ui().closedNow:""}
 function gm(p){return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(p[0]+" Hong Kong")}
 function isCheap(p){var s=p[5];if(/бесплатно|без cover/.test(s))return true;var m=s.match(/\d[\d ]*/);return m?parseInt(m[0].replace(/ /g,""),10)<=50:false}
 function pick(i,fly){var p=P[i],c=C[p[1]];sel=i;
-document.getElementById("card").innerHTML="<h2>"+c[0]+" "+p[0]+(p[7]?" ✓":"")+"</h2><div class='t'>"+c[1]+"</div><p class='ph'>💰 "+p[5]+"</p><p class='ph'>🕒 "+p[6]+stTxt(p)+"</p><p>"+p[4]+"</p><a class='gm' target='_blank' rel='noopener' href='"+gm(p)+"'>📍 Открыть в Google Maps</a>";
+document.getElementById("card").innerHTML="<h2>"+c[0]+" "+pname(i)+(p[7]?" ✓":"")+"</h2><div class='t'>"+catName(p[1])+"</div><p class='ph'>💰 "+pprice(i)+"</p><p class='ph'>🕒 "+phours(i)+stTxt(i)+"</p><p>"+pdesc(i)+"</p><a class='gm' target='_blank' rel='noopener' href='"+gm(p)+"'>"+ui().gm+"</a>";
 if(fly)map.flyTo([p[3],p[2]],Math.max(map.getZoom(),15),{duration:.6});draw()}
-function matches(p){if(!q)return true;return (p[0]+" "+C[p[1]][0]+" "+C[p[1]][1]+" "+p[4]).toLowerCase().indexOf(q)>=0}
-function draw(){var n=hkNow();ob.textContent="🕒 Открыто сейчас ("+("0"+Math.floor(n.min/60)).slice(-2)+":"+("0"+n.min%60).slice(-2)+" в HK)";
+function matches(i,p){if(!q)return true;return (pname(i)+" "+catName(p[1])+" "+pdesc(i)).toLowerCase().indexOf(q)>=0}
+function draw(){var n=hkNow(),hh=("0"+Math.floor(n.min/60)).slice(-2),mm=("0"+n.min%60).slice(-2);ob.textContent=lang==="en"?"🕒 Open now ("+hh+":"+mm+" HK)":lang==="zh"?"🕒 現在營業（香港時間 "+hh+":"+mm+"）":"🕒 Открыто сейчас ("+hh+":"+mm+" в HK)";
 var l=document.getElementById("list");l.innerHTML="";
-P.forEach(function(p,i){var v=on[p[1]]&&matches(p)&&(!cheap||isCheap(p))&&(!opn||openNow(p)===true);var m=marks[i];
+P.forEach(function(p,i){var v=on[p[1]]&&matches(i,p)&&(!cheap||isCheap(p))&&(!opn||openNow(p)===true);var m=marks[i];
 if(v){if(!map.hasLayer(m))m.addTo(map);var e=m.getElement();if(e)e.firstChild.classList.toggle("sel",sel===i);
-var d=document.createElement("div");d.innerHTML="<b></b><small></small><small></small>";d.children[0].textContent=C[p[1]][0]+" "+p[0]+(p[7]?" ✓":"");d.children[1].textContent="💰 "+p[5];d.children[2].textContent="🕒 "+p[6]+stTxt(p);
+var d=document.createElement("div");d.innerHTML="<b></b><small></small><small></small>";d.children[0].textContent=C[p[1]][0]+" "+pname(i)+(p[7]?" ✓":"");d.children[1].textContent="💰 "+pprice(i);d.children[2].textContent="🕒 "+phours(i)+stTxt(i);
 d.onclick=function(){pick(i,true);document.getElementById("map").scrollIntoView({behavior:"smooth",block:"center"})};d.tabIndex=0;d.setAttribute("role","button");d.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();d.click()}};l.appendChild(d)}else if(map.hasLayer(m))map.removeLayer(m)});
-if(!l.children.length){var e=document.createElement("div");e.textContent="Ничего не найдено. Измените запрос или фильтры.";e.style.cursor="default";l.appendChild(e)}}
-draw();
+if(!l.children.length){var e=document.createElement("div");e.textContent=ui().empty;e.style.cursor="default";l.appendChild(e)}}
+function applyLang(){
+document.documentElement.lang=lang==="zh"?"zh-Hant":lang;
+document.title=ui().title;
+document.getElementById("ttl").textContent=ui().title;
+document.getElementById("sub").textContent=ui().sub;
+qEl.placeholder=ui().search;
+var bs=document.querySelectorAll("#lang button");for(var i=0;i<bs.length;i++){bs[i].classList.toggle("on",bs[i].getAttribute("data-l")===lang)}
+var spans=document.querySelectorAll(".leaflet-control-layers-base label span span");ui().layers.forEach(function(t,j){if(spans[j])spans[j].textContent=" "+t});
+if(geoBtnEl){geoBtnEl.textContent=ui().geo;geoBtnEl.title=ui().geoTitle}
+if(sel===null){document.getElementById("card").innerHTML="<h2>"+ui().choose+"</h2><p>"+ui().tap+"</p>"}
+buildChips();draw();
+}
+document.getElementById("lang").addEventListener("click",function(e){var b=e.target.closest?e.target.closest("button[data-l]"):null;if(!b)return;lang=b.getAttribute("data-l");try{localStorage.setItem("hkLang",lang)}catch(err){}applyLang();if(sel!==null)pick(sel,false)});
+applyLang();
 </script></body></html>
