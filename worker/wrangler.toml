@@ -1,0 +1,9 @@
+name = "hk-crowd"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+
+# Created with: wrangler kv namespace create REPORTS
+# Paste the returned id below.
+[[kv_namespaces]]
+binding = "REPORTS"
+id = "PASTE_KV_NAMESPACE_ID"
