@@ -46,6 +46,50 @@ export default {
       return json({ ok: true, service: "hk-crowd", now: Date.now() });
     }
 
+    // CORS-friendly proxy for the KMB open-data API.
+    if (url.pathname.startsWith("/kmb/")) {
+      if (request.method !== "GET") return json({ error: "method" }, 405);
+      const sub = url.pathname.slice("/kmb/".length);
+      if (!/^(stop|stop-eta\/[A-Za-z0-9-]+)$/.test(sub)) {
+        return json({ error: "bad path" }, 400);
+      }
+      const cache = caches.default;
+      const cacheKey = "https://kmb-cache.internal/" + sub;
+      const hit = await cache.match(cacheKey);
+      if (hit) {
+        return new Response(hit.body, {
+          status: 200,
+          headers: {
+            ...CORS,
+            "Content-Type": "application/json; charset=utf-8",
+            "X-Cache": "hit"
+          }
+        });
+      }
+      const upstream = await fetch(
+        "https://data.etabus.gov.hk/v1/transport/kmb/" + sub
+      );
+      if (!upstream.ok) return json({ error: "upstream" }, 502);
+      const body = await upstream.text();
+      const ttl = sub === "stop" ? 21600 : 15;
+      const cached = new Response(body, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Cache-Control": "public, max-age=" + ttl
+        }
+      });
+      await cache.put(cacheKey, cached.clone());
+      return new Response(body, {
+        status: 200,
+        headers: {
+          ...CORS,
+          "Content-Type": "application/json; charset=utf-8",
+          "X-Cache": "miss"
+        }
+      });
+    }
+
     if (url.pathname === "/reports" && request.method === "GET") {
       const key = normalizeKey(url.searchParams.get("key"));
       if (!key) return json({ error: "bad key" }, 400);
