@@ -12,5 +12,11 @@
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "shortcuts": [
+    { "name": "План на день", "short_name": "План", "url": "./?plan=1", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Рядом со мной", "short_name": "Рядом", "url": "./?near=1", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Радар дождя", "short_name": "Радар", "url": "./?radar=1", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Пасспорт районов", "short_name": "Пасспорт", "url": "./?pass=1", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
   ]
 }
